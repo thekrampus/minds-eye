@@ -26,14 +26,12 @@ var minds_eye_messages = ["was fabricated within my mind's eye.",
 						  "was a forgery by my mind's eye."];
 
 $(document).ready(function() {
-	// $.ajax({
-	//     type: "GET",
-	//     url:"database.csv",
-	//     dataType: "text",
-	//     success: function(raw_database) {initialize(raw_database);}
-	// });
-
-	initialize(uglyHardcodedDatabase());
+	$.ajax({
+	    type: "GET",
+	    url:"database.csv",
+	    dataType: "text",
+	    success: function(raw_database) {initialize(raw_database);}
+	});
 });
 
 /*
@@ -326,15 +324,13 @@ function parseCSV(raw_database) {
  * Post the player's guess to the server, for use in later statistical analysis.
  */
 function postGuess() {
-	// $.ajax({
-	// 	type: 'POST',
-	// 	    url: 'dbmod.py',
-	// 	    data: current_guess,
-	// 	    //contentType: "application/json; charset=utf-8",
-	// 	    //dataType: "json",
-	// 	    success: function(data) { console.log(data); },
-	// 	    error: function(data) { console.log("failure!"); console.log(data); }		
-	// });
+	$.ajax({
+		type: 'POST',
+		url: 'dbmod.py',
+		data: current_guess,
+		success: function(data) { console.log(data); },
+		error: function(data) { console.log("failure!"); console.log(data); }		
+	});
 }
 
 /*
@@ -374,22 +370,4 @@ function shuffle(array) {
 	}
 
 	return array;
-}
-
-/*
- * Just returns a hardcoded database for testing purposes.
- *
- * So, typically we'd want to load the database from the server,
- * where it's typically located at database.csv. But most browsers (including
- * the one I'm using for testing) disallow websites or files from accessing
- * other files. Good for security, bad for testing. This just provides a raw
- * database string for testing, removing the need for accessing outside files.
- * I've commented out the code that loads the database from the server (and
- * likewise posts results back). Make sure this gets removed and the
- * aforementioned code gets uncommented before deployment.
- *
- * @return {string} - Hardcoded snapshot of the database, circa August 01, 2014.
- */
-function uglyHardcodedDatabase() {
-	return "Horse Names,Admiral's Voyage,Alpha,American Flag,Atomic Rain,Backtalk,Best Present Ever,Bodemeister,Cajun Beat,California Chrome,Celtic Ash,Chocolate Candy,Colorado King,Commando,Creative Cause,Daddy Long Legs,Daddy Nose Best,Dance With Fate,Danza,Delhi,Discreet Marq,Done Talking,Dunkirk,Eight Thirty,El Padrino,Falling Sky,Flying Private,Frac Daddy,Freesian Fire,Genie,Gentle Savage,Ghost Zapper,Gold Coin,Golden Soul,Greek Money,Harry's Holiday,Highest Honors,Ice Box,Indian Blessing,Intense Holiday,June Cleaver,Kauai King,Kid Cruz,Kiss Moon,Kona Gold,Lady Secret,Lemon Punch,Liaison,Luv Gov,Magical Band,Magic Hour,Matterhorn,Midnight Hawk,Midnight Interlude,Midnight Taboo,Mind Bender,Mind's Eyes,Mister Hot Stuff,Misty Morn,Moccasin,Mucho Macho Man,Optimizer,Orb,Papa Clem,Papa Jerry,Peter Pan,Please Explain,Prime Directive,Rachel Alexandra,Rousing Sermon,Sabercat,Sacred Light,Samraat,Scottish Chieftan,Scrimshaw,Sizzling Gold,Somali Lemonade,Star Shoot,Stay Thirsty,St. Liam,Stop Time,Sugar Shock,Summer Bird,Summer Tan,Sunshine Forever,Sweet Vendetta,Take The Points,Terrain,The Bard,The Green Monkey,Thor's Echo,Thunder Gulch,Token Special,Twenty Grand,Twilight Ridge,Twinspired,Union Rags,Westside Bernie,Wicked Strong,Wildcat Red,Wild Rush\nH-Guess,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,1,2,3,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,1,1,1,1,0,2,0,0,0,0,0,0,0,1,0,0,2,0,0,1,0,0,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1\nW-Guess,1,0,1,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,2,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0\nME-Guess,0,1,1,1,0,0,1,0,0,0,1,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,2,0,0,1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,1,1,0,0,2,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,2,1,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,0,0,0\nWeed Names,Accidental Tourist,Ace of Spades,Air Force One,Allen Wrench,American Dream,Armageddon,Aruel,Asteroid,Atmosphere,Beehive,Big Bud,Bio-Jesus,Black Domina,Blue Bayou,Blue Moon,Brain Child,Buddha's Sister,Cherry Pie,Chocolope,Cracker Jack,Dairy Queen,Don Cristo,Double Dream,Dr. Grinspoon,Dutch Treat,Early Garage,Early Girl,Edelweiss,El Jeffe,Emperor's Cut,Galactic Jack,Glass Slipper,God's Gift,Godzilla,Grand Hustle,Grand Platinum,Gun,Hawaiian Fire,Holy Grail,Hubba Bubba,Incredible Hulk,Jack's Cleaner,Jane Doe,Jilly Bean,Johnnie Walker,Johnny's Tonic,Joker's Revenge,King Henry,King Louis,King's Bread,L.A. Confidential,Life Saver,Liquid Butter,Little Devil,Loud Dream,Louis XIII,Low Rider,Lucky Charms,Medicine Man,MK Ultra,Morning Glory,Morning Star,Motorcity Whip,Mr. Nice Guy,Muchacho Man,Neville's Maze,Nevil's Wreck,Orange Moon,Outlaw,Pennies From Heaven,Pennywise,Polite With a Punch,Private Reserve,Professor Chaos,Purple Arrow,Qrazy Train,Rare Darkness,Rated R,Red Bull,Richie Rich,Rocklock,Royal Dwarf,Sapphire Star,Shark Shock,Shipwreck,Smoke on the Water,Soul Shine,Sour Grapes,Sunny Side Up,Sunset Sherbert,Sweet Tooth,Tasmanian Devil,Uncle Pete,Watermelon Tormaline,Whitaker Blues,White Gold,White Rhino,White Russian,Willies Wonder,Yumboldt\nH-Guess,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,2,0,0,0,1,0,0,1,1,0,0,1,0,0,0,2\nW-Guess,1,1,0,0,1,1,0,0,1,0,0,1,0,0,0,2,0,1,1,2,0,0,2,2,1,0,0,1,1,1,2,1,1,1,1,1,0,0,0,0,1,0,1,3,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,0,0,0\nME-Guess,0,0,0,0,0,0,0,0,0,0,3,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,3,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0\nMind's Eye,Accho,Adios Amigos,Albany New York,Apples and Oranges,Apricot,Autumn Haze,Avalanche,Backlot Tour,Ballyhoo,Beethoven's Bust,Bob's Your Uncle,Boogeyman,Buried Treasure,Burnt Toast,Cannery Row,Captain America,Chardonnay,Charm Bracelet,Cliff's Surprise,Court Jester,Crystal Ship,Detour,Dollar Bill,Dolphin's Fin,Double Barrel,Double Jeopardy,Dust-up,Earth Worm,Executive Suite,Fog,Fortunate Son,Galaxy,General Patton,Ghost Town,Giddy Up and Go,Grape Nuts,Grey Flannel,Gupta,High Tide,Hummer,Irish Eyes,Jazz Age,Joni Mitchell,Lemonade,Let's Hear It for the Boy,Lieutenant Dan,Long Tall Sally,Low Tide,Macho Nacho,Milk & Cookies,Miranda's Miracle,Monkey Wrench,Muldoon,Par Excellence,Pepper,Poseidon's Trident,Quote-Unquote,Sacrificial Lamb,Sealed With a Kiss,Space Needle,Stealth Bomber,Strange Dawn,Ukulele,Uncle Ben,Undeterred Goon,Unlawful Entry,Upstart,Up Up and Away,Waikiki Wave,Weekender,Holy Roller,Inclement Weather,Pop Rox,Masquerade,Monkey's Uncle,Bible Thumper,Shazam,Photon Torpedo,Devil's Workshop,Frankenbutter,Dung Beetle,Black Astronaut,Bowtie Rasta,Carbon Credit,High Fructose Porn Syrup,Tiny Tim,Free Raisin,Chrysalis,Porkchop Parody,White Man's Burden,Red Menace,Bletchley Park,High as Balls,What a Crowd,Boob Glue,Culture Shock,Marriage Sow,Ka-ching!,Alien Visitation,Police Brutality\nH-Guess,1,1,0,0,1,0,0,0,0,0,1,0,0,1,0,0,2,0,0,0,1,1,0,0,0,3,0,0,0,0,0,1,1,0,0,0,0,1,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,2,0,0,0,0,3,0,0,0,1,0,0,0,1,1,0,0,0,0,1,0,2,0,0,0,0,2,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0\nW-Guess,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,2,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0\nME-Guess,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,3,0,0,0,0,0,0,1,0,0,0,1,1,0,1,0,0,0,1,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,2,0,0,1,1,0,1,0,0,0,0,1,0,0,0,0,0,1,1,1,2,0,0,0,0,0,1,1,0,1,0,0,1,1,0,0,0,0,2,2";
 }
