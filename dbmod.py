@@ -2,8 +2,8 @@
 
 import csv, cgi, cgitb
 
-
 def recordGuess(item, guess):
+    """ Log a guess for an item in the database """
     rows = []
     offset = {
         'horse': 1,

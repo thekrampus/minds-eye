@@ -3,6 +3,7 @@ var horses;
 var weeds;
 var minds_eye;
 
+/* Tracks the player's guess as it's made */
 var current_guess = {
 	horse: '',
 	weed: '',
@@ -10,6 +11,8 @@ var current_guess = {
 	remaining: 3
 }
 
+/* Descriptive strings relating to my mind's eye. */
+/* As quixotic as it is mysterious */
 var minds_eye_messages = ["was fabricated within my mind's eye.",
 						  "was found deep within my mind's eye.",
 						  "was brought to you by my mind's eye.",
@@ -33,6 +36,11 @@ $(document).ready(function() {
 	initialize(uglyHardcodedDatabase());
 });
 
+/*
+ * Pre-game initialization. Loads databases, starts page content generation.
+ *
+ * @param {string} raw_database - Raw string-format CSV database.
+ */
 function initialize(raw_database) {
     database = parseCSV(raw_database);
     if(database.length > 0) {
@@ -53,6 +61,11 @@ function initialize(raw_database) {
     }
 }
 
+/*
+ * Fallback routine if database loading fails.
+ * (i.e. if database is busy or can't be found)
+ * Current strategy: Wait a little and reload the page.
+ */
 function dbErrorFallback() {
     $('#wrapper').append("Looks like the database is busy. Hold on, let me try something...");
     setTimeout(function() {
@@ -60,18 +73,22 @@ function dbErrorFallback() {
 	}, 3000);
 }
 
+/*
+ * Animate the player's three choices onto the page,
+ * along with relevant controls.
+ */
 function presentOptions() {
+
+	/* Get random candidates and insert in the DOM */
 	var triple = shuffle(getTriple());
-	
 	triple.forEach(function(item) {
 		$('#choices').prepend("<tr height=100 hidden><td class='candidate' width=200 align=center>" + item + "</td></tr>");
 	});
-	
 	$('tr').append("<td align=center hidden><button class='horse guess'></button><div class='guesshelp' hidden>HORSE</div></td>");
 	$('tr').append("<td align=center hidden><button class='weed guess'></button><div class='guesshelp' hidden>WEED</div></td>");
 	$('tr').append("<td align=center hidden><button class='mind guess'></button><div class='guesshelp' hidden>MIND'S EYE</div></td>");
 
-
+	/* Guess-button functionality. */
 	$('.guess').on('click', function() {
 		makeGuess($(this));
 	}).on('mouseenter', function() {
@@ -80,10 +97,8 @@ function presentOptions() {
 		$(this).siblings('.guesshelp:visible').slideUp(500);
 	});
 
+	/* Fade the three candidates in recursively */
 	function fadeCandidates() {
-		// var last = $('tr:visible:last');
-		// if(last.length > 0)
-		// 	fadeGuesses(last);
 		var next = $('tr:hidden:first');
 		if(next.length > 0)
 			next.fadeIn(1000, fadeCandidates);
@@ -91,6 +106,7 @@ function presentOptions() {
 			fadeGuesses();
 	}
 
+	/* Fade in and expand the guess controls */
 	function fadeGuesses() {
 		$('td:hidden').fadeIn(800).promise().done(function() {
 			$(this).animate({width: '66px'}, 800);
@@ -98,6 +114,7 @@ function presentOptions() {
 		});
 	}
 
+	/* Build and fade in tagline */
 	function fadeTagline() {
 		var tagline = $('#tagline');
 		tagline.append(randElement(minds_eye_messages));
@@ -105,19 +122,31 @@ function presentOptions() {
 		tagline.fadeIn(2000, fadeFootnote);
 	}
 
+	/* Finally, fade in the footnote */
 	function fadeFootnote() {
 		$('#footnote').fadeIn(2000);
 	}
 
+	/* Start animation process */
+	/* Each phase is called as a collback from the previous phase */
 	fadeCandidates();
 }
 
+/*
+ * Handle player's guess action. Called on guess-button presses.
+ * 
+ * Removes any invalidated guess controls and logs the players guess.
+ * Additionally, if only one guess remains, that guess is made for the player.
+ *
+ * @param {selector} button - jQuery selector of the button that's been pressed.
+ */
 function makeGuess(button) {
 	var candidate = button.parent().siblings('.candidate').text();
 	var guess = '';
 
-	button.parent().siblings(':not(.candidate)').fadeOut(200);
+	/* Fade out guess tooltips and any irrelevant guess controls */
 	$('.guesshelp').slideUp(200);
+	button.parent().siblings(':not(.candidate)').fadeOut(200);
 
 	if(button.hasClass('horse')) {
 		guess = 'horse';
@@ -131,22 +160,24 @@ function makeGuess(button) {
 		guess = 'mind';
 		current_guess.mind = candidate;
 		$('.mind').fadeOut(200);
-	} else {
-		alert("Go email the developer that you encountered a malformed guess class");
 	}
 
+	/* Decrement guess counter after animations are done */
 	$('.guess').promise().done(function() {
 		current_guess.remaining--;
 		
+		/* If only one guess remains, make it automatically */
+		/* If no guesses remain, go to validation phase */
 		if(current_guess.remaining == 1)
 			makeGuess($('.guess:visible:not(:animated):first'));
 		else if(current_guess.remaining == 0)
 			validateGuesses();
 	});
-
-	console.log("Guess: " + candidate + ", " + guess + ". Remaining: " + current_guess.remaining);
 }
 
+/*
+ * Once the player has made their guesses, check each against the database.
+ */
 function validateGuesses() {
 
 	if($.inArray(current_guess.horse, horses) != -1)
@@ -164,36 +195,55 @@ function validateGuesses() {
 	else
 		wrongGuess('mind');
 
+	/* Post player's guesses back to the server, for stats */
 	postGuess();
 
+	/* Fade in restart button */
 	$('#restartwrapper').fadeIn(3000);
 }
 
+/*
+ * The player has guessed correctly on one of the items. Good job!
+ * Updates page to reflect this turn of events.
+ *
+ * @param {string} guess - Guess category (horse, weed, mind)
+ */
 function correctGuess(guess) {
-	var row, message;
+	var item, message;
 
+	/* Get corresponding update info based on the guess category */
 	switch(guess) {
 	case 'horse':
-		row = $('tr:contains(' + current_guess.horse + ')');
+		item = current_guess.horse;
 		message = "was of course a horse.";
 		break;
 	case 'weed':
-		row = $('tr:contains(' + current_guess.weed + ')');
+		item = current_guess.weed;
 		message = "was indeed a weed.";
 		break;
 	case 'mind':
-		row = $('tr:contains(' + current_guess.mind + ')');
+		item = current_guess.mind;
 		message = randElement(minds_eye_messages);
 		break;
 	}
+
+	var row = $('tr:contains(' + item + ')');
 	
+	/* Insert into DOM */
 	row.append("<td class='correct' align=left hidden> " + message + "</td>");
 	row.children('.correct').fadeIn(2000);
 }
 
+/*
+ * The player has guessed incorrectly on one of the items. Dag, yo!
+ * Updates page to reflect this tragedy.
+ *
+ * @param {string} guess - Guess category (horse, weed, mind)
+ */
 function wrongGuess(guess) {
 	var item, message, offset;
 	
+	/* Get update info based on guess category */
 	switch(guess) {
 	case 'horse':
 		item = current_guess.horse;
@@ -214,48 +264,67 @@ function wrongGuess(guess) {
 
 	var row = $('tr:contains(' + item + ')');
 	var actual = getCategory(item);
-	var index, statIndex;
 
+	/* Get update info based on actual category */
 	switch(actual) {
 	case 'horse':
 		message += " it was actually a horse.";
-		index = $.inArray(item, horses);
-		statIndex = 0;
 		break;
 	case 'weed':
 		message += " it was in fact a weed.";
-		index = $.inArray(item, weeds);
-		statIndex = 4;
 		break;
 	case 'mind':
 		message += " it was in reality engineered by my mind's eye.";
-		index = $.inArray(item, minds_eye);
-		statIndex = 8;
 		break;
 	}
+
+	/* Insert into DOM */
 	row.append("<td class='wrong' align=left hidden> " + message + "</td>");
 	row.children('.wrong').fadeIn(2000);
 }
 
-function getCategory(item) {
-	if($.inArray(item, horses) != -1)
+/*
+ * Get the actual category of a candidate item.
+ *
+ * @param {string} candidate - Name of a candidate.
+ *
+ * @return {string} - Category of the candidate.
+ */
+function getCategory(candidate) {
+	if($.inArray(candidate, horses) != -1)
 		return "horse";
-	else if($.inArray(item, weeds) != -1)
+	else if($.inArray(candidate, weeds) != -1)
 		return "weed";
-	else if($.inArray(item, minds_eye) != -1)
+	else if($.inArray(candidate, minds_eye) != -1)
 		return "mind";
 }
 
+/*
+ * Randomly selects three candidates to present to the player - a horse, a weed,
+ * and something out of my mind's eye, as mysterious as it is enigmatic.
+ *
+ * @return {string array} - An array of three strings, one of each category.
+ */
 function getTriple() {
 	triple = [randElement(horses), randElement(weeds), randElement(minds_eye)];
 	return triple;
 }
 
+/*
+ * Parse a raw CSV database string into a two-dimensional array.
+ *
+ * @param {string} raw_database - CSV database, in string format.
+ *
+ * @return {array} - CSV database, in array format.
+ */
 function parseCSV(raw_database) {
 	arrays = $.csv.toArrays(raw_database);
 	return arrays;
 }
 
+/*
+ * Post the player's guess to the server, for use in later statistical analysis.
+ */
 function postGuess() {
 	// $.ajax({
 	// 	type: 'POST',
@@ -268,6 +337,15 @@ function postGuess() {
 	// });
 }
 
+/*
+ * Pick a random element out of an array.
+ *
+ * @param {array} array - An array.
+ *
+ * @return - An element of the array.
+ *
+ * Sometimes I wonder if comprehensive documentation is really worth it, y'know?
+ */
 function randElement(array) {
 	var element = '';
 	while(element == '') {
@@ -276,6 +354,13 @@ function randElement(array) {
 	return element;
 }
 
+/*
+ * Shuffle an array.
+ *
+ * @param {array} array - An array.
+ *
+ * @return {array} - The input array, with elements in random order.
+ */
 function shuffle(array) {
 	var counter = array.length;
 	var t, i;
@@ -291,6 +376,20 @@ function shuffle(array) {
 	return array;
 }
 
+/*
+ * Just returns a hardcoded database for testing purposes.
+ *
+ * So, typically we'd want to load the database from the server,
+ * where it's typically located at database.csv. But most browsers (including
+ * the one I'm using for testing) disallow websites or files from accessing
+ * other files. Good for security, bad for testing. This just provides a raw
+ * database string for testing, removing the need for accessing outside files.
+ * I've commented out the code that loads the database from the server (and
+ * likewise posts results back). Make sure this gets removed and the
+ * aforementioned code gets uncommented before deployment.
+ *
+ * @return {string} - Hardcoded snapshot of the database, circa August 01, 2014.
+ */
 function uglyHardcodedDatabase() {
 	return "Horse Names,Admiral's Voyage,Alpha,American Flag,Atomic Rain,Backtalk,Best Present Ever,Bodemeister,Cajun Beat,California Chrome,Celtic Ash,Chocolate Candy,Colorado King,Commando,Creative Cause,Daddy Long Legs,Daddy Nose Best,Dance With Fate,Danza,Delhi,Discreet Marq,Done Talking,Dunkirk,Eight Thirty,El Padrino,Falling Sky,Flying Private,Frac Daddy,Freesian Fire,Genie,Gentle Savage,Ghost Zapper,Gold Coin,Golden Soul,Greek Money,Harry's Holiday,Highest Honors,Ice Box,Indian Blessing,Intense Holiday,June Cleaver,Kauai King,Kid Cruz,Kiss Moon,Kona Gold,Lady Secret,Lemon Punch,Liaison,Luv Gov,Magical Band,Magic Hour,Matterhorn,Midnight Hawk,Midnight Interlude,Midnight Taboo,Mind Bender,Mind's Eyes,Mister Hot Stuff,Misty Morn,Moccasin,Mucho Macho Man,Optimizer,Orb,Papa Clem,Papa Jerry,Peter Pan,Please Explain,Prime Directive,Rachel Alexandra,Rousing Sermon,Sabercat,Sacred Light,Samraat,Scottish Chieftan,Scrimshaw,Sizzling Gold,Somali Lemonade,Star Shoot,Stay Thirsty,St. Liam,Stop Time,Sugar Shock,Summer Bird,Summer Tan,Sunshine Forever,Sweet Vendetta,Take The Points,Terrain,The Bard,The Green Monkey,Thor's Echo,Thunder Gulch,Token Special,Twenty Grand,Twilight Ridge,Twinspired,Union Rags,Westside Bernie,Wicked Strong,Wildcat Red,Wild Rush\nH-Guess,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,1,2,3,0,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,1,1,1,1,0,2,0,0,0,0,0,0,0,1,0,0,2,0,0,1,0,0,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1\nW-Guess,1,0,1,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,2,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0\nME-Guess,0,1,1,1,0,0,1,0,0,0,1,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,2,0,0,1,1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,1,1,0,0,2,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,2,1,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1,0,0,0,0\nWeed Names,Accidental Tourist,Ace of Spades,Air Force One,Allen Wrench,American Dream,Armageddon,Aruel,Asteroid,Atmosphere,Beehive,Big Bud,Bio-Jesus,Black Domina,Blue Bayou,Blue Moon,Brain Child,Buddha's Sister,Cherry Pie,Chocolope,Cracker Jack,Dairy Queen,Don Cristo,Double Dream,Dr. Grinspoon,Dutch Treat,Early Garage,Early Girl,Edelweiss,El Jeffe,Emperor's Cut,Galactic Jack,Glass Slipper,God's Gift,Godzilla,Grand Hustle,Grand Platinum,Gun,Hawaiian Fire,Holy Grail,Hubba Bubba,Incredible Hulk,Jack's Cleaner,Jane Doe,Jilly Bean,Johnnie Walker,Johnny's Tonic,Joker's Revenge,King Henry,King Louis,King's Bread,L.A. Confidential,Life Saver,Liquid Butter,Little Devil,Loud Dream,Louis XIII,Low Rider,Lucky Charms,Medicine Man,MK Ultra,Morning Glory,Morning Star,Motorcity Whip,Mr. Nice Guy,Muchacho Man,Neville's Maze,Nevil's Wreck,Orange Moon,Outlaw,Pennies From Heaven,Pennywise,Polite With a Punch,Private Reserve,Professor Chaos,Purple Arrow,Qrazy Train,Rare Darkness,Rated R,Red Bull,Richie Rich,Rocklock,Royal Dwarf,Sapphire Star,Shark Shock,Shipwreck,Smoke on the Water,Soul Shine,Sour Grapes,Sunny Side Up,Sunset Sherbert,Sweet Tooth,Tasmanian Devil,Uncle Pete,Watermelon Tormaline,Whitaker Blues,White Gold,White Rhino,White Russian,Willies Wonder,Yumboldt\nH-Guess,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,2,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,1,2,0,0,0,1,0,0,1,1,0,0,1,0,0,0,2\nW-Guess,1,1,0,0,1,1,0,0,1,0,0,1,0,0,0,2,0,1,1,2,0,0,2,2,1,0,0,1,1,1,2,1,1,1,1,1,0,0,0,0,1,0,1,3,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,0,0,0\nME-Guess,0,0,0,0,0,0,0,0,0,0,3,0,0,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,3,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0\nMind's Eye,Accho,Adios Amigos,Albany New York,Apples and Oranges,Apricot,Autumn Haze,Avalanche,Backlot Tour,Ballyhoo,Beethoven's Bust,Bob's Your Uncle,Boogeyman,Buried Treasure,Burnt Toast,Cannery Row,Captain America,Chardonnay,Charm Bracelet,Cliff's Surprise,Court Jester,Crystal Ship,Detour,Dollar Bill,Dolphin's Fin,Double Barrel,Double Jeopardy,Dust-up,Earth Worm,Executive Suite,Fog,Fortunate Son,Galaxy,General Patton,Ghost Town,Giddy Up and Go,Grape Nuts,Grey Flannel,Gupta,High Tide,Hummer,Irish Eyes,Jazz Age,Joni Mitchell,Lemonade,Let's Hear It for the Boy,Lieutenant Dan,Long Tall Sally,Low Tide,Macho Nacho,Milk & Cookies,Miranda's Miracle,Monkey Wrench,Muldoon,Par Excellence,Pepper,Poseidon's Trident,Quote-Unquote,Sacrificial Lamb,Sealed With a Kiss,Space Needle,Stealth Bomber,Strange Dawn,Ukulele,Uncle Ben,Undeterred Goon,Unlawful Entry,Upstart,Up Up and Away,Waikiki Wave,Weekender,Holy Roller,Inclement Weather,Pop Rox,Masquerade,Monkey's Uncle,Bible Thumper,Shazam,Photon Torpedo,Devil's Workshop,Frankenbutter,Dung Beetle,Black Astronaut,Bowtie Rasta,Carbon Credit,High Fructose Porn Syrup,Tiny Tim,Free Raisin,Chrysalis,Porkchop Parody,White Man's Burden,Red Menace,Bletchley Park,High as Balls,What a Crowd,Boob Glue,Culture Shock,Marriage Sow,Ka-ching!,Alien Visitation,Police Brutality\nH-Guess,1,1,0,0,1,0,0,0,0,0,1,0,0,1,0,0,2,0,0,0,1,1,0,0,0,3,0,0,0,0,0,1,1,0,0,0,0,1,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,2,0,0,0,0,3,0,0,0,1,0,0,0,1,1,0,0,0,0,1,0,2,0,0,0,0,2,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0\nW-Guess,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,2,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0\nME-Guess,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,3,0,0,0,0,0,0,1,0,0,0,1,1,0,1,0,0,0,1,0,0,1,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,2,0,0,1,1,0,1,0,0,0,0,1,0,0,0,0,0,1,1,1,2,0,0,0,0,0,1,1,0,1,0,0,1,1,0,0,0,0,2,2";
 }
