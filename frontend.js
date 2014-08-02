@@ -42,20 +42,22 @@ $(document).ready(function() {
 function initialize(raw_database) {
     database = parseCSV(raw_database);
     if(database.length > 0) {
-	horses = database[0];
-	horses.shift();
-	weeds = database[4];
-	weeds.shift();
-	minds_eye = database[8];
-	minds_eye.shift();
-	
-	presentOptions();
-	
-	$('#restart').on('click', function() {
-		window.location.reload(false);
+		horses = database[0];
+		horses.shift();
+		weeds = database[4];
+		weeds.shift();
+		minds_eye = database[8];
+		minds_eye.shift();
+		
+		presentOptions();
+		// $('#choices').append("<tr height=100></tr>");
+		// buildChart($('tr'), 'Shipwreck');
+		
+		$('#restart').on('click', function() {
+			window.location.reload(false);
 	    });
     } else {
-	dbErrorFallback();
+		dbErrorFallback();
     }
 }
 
@@ -106,7 +108,7 @@ function presentOptions() {
 
 	/* Fade in and expand the guess controls */
 	function fadeGuesses() {
-		$('td:hidden').fadeIn(800).promise().done(function() {
+		$('.guess').parent(':hidden').fadeIn(800).promise().done(function() {
 			$(this).animate({width: '66px'}, 800);
 			$('#choices').animate({left: '-=15%'}, 800, fadeTagline);
 		});
@@ -230,6 +232,8 @@ function correctGuess(guess) {
 	/* Insert into DOM */
 	row.append("<td class='correct' align=left hidden> " + message + "</td>");
 	row.children('.correct').fadeIn(2000);
+
+	buildChart(row, item);
 }
 
 /*
@@ -279,6 +283,119 @@ function wrongGuess(guess) {
 	/* Insert into DOM */
 	row.append("<td class='wrong' align=left hidden> " + message + "</td>");
 	row.children('.wrong').fadeIn(2000);
+
+	buildChart(row, item);
+}
+
+/*
+ * Builds a pie chart displaying the guessing statistics for a candidate
+ * and inserts it into the DOM.
+ *
+ * @param {selector} row - Table row containing the candidate.
+ * @param {string} candidate - Candidate to get stats for.
+ */
+function buildChart(row, candidate) {
+	var width = 400;
+	var height = 150;
+	var radius = 40;
+	var colors = [ '#0072aa', '#c7990b', '#960570'];
+	var textOffset = 7;
+
+	var index, offset;
+
+	var category = getCategory(candidate);
+
+    switch(category) {
+		    case 'horse':
+		index = $.inArray(candidate, horses) + 1;
+		offset = 0;
+		break;
+    case 'weed':
+		index = $.inArray(candidate, weeds) + 1;
+		offset = 4;
+		break;
+    case 'mind':
+		index = $.inArray(candidate, minds_eye) + 1;
+		offset = 8;
+		break;
+    }
+
+	var statVals = [ +database[offset+1][index],
+					   +database[offset+2][index],
+					   +database[offset+3][index]];
+
+	var totalVal = statVals[0] + statVals[1] + statVals[2];
+
+	if(totalVal == 0) {
+		return;
+	}
+
+    var stats = [{"label": "HORSE", "value": statVals[0], "percent": statVals[0]/totalVal},
+				 {"label": "WEED", "value": statVals[1], "percent": statVals[1]/totalVal},
+				 {"label": "MIND'S EYE", "value": statVals[2], "percent": statVals[2]/totalVal}];
+
+	var cell = row.children('.candidate');
+
+	var arc = d3.svg.arc()
+		.outerRadius(radius)
+		.innerRadius(0);
+
+	var pie = d3.layout.pie()
+		.sort(null)
+		.value(function(d) {
+			return d.value;
+		});
+
+	var svg = d3.selectAll(cell.toArray())
+		.append('svg:svg')
+		.data([stats])
+		.attr('width', width)
+		.attr('height', height)
+		.append('svg:g')
+		.attr('transform', 'translate(' + width/2 + ', ' + height/2 + ')');
+
+	var slices = svg.selectAll('g.slice')
+		.data(pie)
+		.enter()
+		.append('svg:g')
+		.attr('class', 'slice');
+
+	slices.append('svg:path')
+		.attr('fill', function(d, i) { return colors[i]; })
+		.attr('d', arc);
+
+	slices.append('svg:text')
+		.attr('transform', function(d) {
+			var x, y, r;
+			
+			r = radius + textOffset;
+			
+			x = r * Math.cos((d.startAngle + d.endAngle - Math.PI) / 2);
+			y = r * Math.sin((d.startAngle + d.endAngle - Math.PI) / 2);
+
+			return 'translate(' + x + ', ' + y + ')';
+		})
+		.attr('text-anchor', function(d) {
+			return ((d.startAngle + d.endAngle)/2 < Math.PI ? 'beginning' : 'end');
+		})
+		.text(function(d, i) {
+			var label = stats[i].label + " - " + Math.round(stats[i].percent * 100) + "%";
+			return (stats[i].value > 0 ? label : '');
+		})
+		.attr('class', 'slicelabel');
+
+	$('.slicelabel').hide();
+
+	$('.slice').children('path').on('mouseenter', function() {
+		$(this).siblings('.slicelabel:hidden').fadeIn(100);
+	}).on('mouseleave', function() {
+		$(this).siblings('.slicelabel:visible').fadeOut(500);
+	});
+
+	cell.children('svg').css({
+		'top': cell.position().top - (radius/2),
+		'left': cell.position().left - (3*width/4)
+	}).hide().fadeIn(2000);
 }
 
 /*
