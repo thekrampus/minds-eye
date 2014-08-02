@@ -50,8 +50,6 @@ function initialize(raw_database) {
 		minds_eye.shift();
 		
 		presentOptions();
-		// $('#choices').append("<tr height=100></tr>");
-		// buildChart($('tr'), 'Shipwreck');
 		
 		$('#restart').on('click', function() {
 			window.location.reload(false);
