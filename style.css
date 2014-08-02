@@ -1,0 +1,94 @@
+@font-face {
+	font-family: 'InterfaceFont';
+	src: url('Quattrocento.ttf');
+}
+
+@font-face {
+	font-family: 'InterfaceBold';
+	src: url('Quattrocento-Bold.ttf');
+}
+
+body {
+	background: #FFFBF4;
+    font-size: 12px;
+	font-family: 'InterfaceFont';
+    margin: 0px;
+}
+
+a:link {
+	color: #090909;
+}
+
+a:visited {
+	color: #000000;
+}
+
+.wrapper {
+    margin: 10% auto;
+    position: relative;
+    font-size: 16px;
+    padding: 10px;
+    border: 1px #fff solid;
+}
+
+#tagline {
+	width: 420px;
+}
+
+.candidate {
+	font-family: 'InterfaceBold';
+	font-size: 24px;
+	font-style: italic;
+}
+
+#choices {
+	position: absolute;
+	top: 10%;
+	left: 38%;
+}
+
+.horse {
+	background: url(horse_icon.png);
+}
+
+.weed {
+	background: url(weed_icon.png);
+}
+
+.mind {
+	background: url(mind_icon.png);
+}
+
+.guess {
+	border-style: none;
+	width: 46px;
+	height: 46px;
+	cursor: pointer;
+}
+
+.guesshelp {
+	font-size: 11px;
+}
+
+.correct {
+	color: #360;
+}
+
+.wrong {
+	color: #900;
+}
+
+#restart {
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	background-color: #FFFBF4;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #FFF;
+	text-decoration: none;
+	cursor: pointer;
+	font-size: 12px;
+	font-style: italic;
+	font-family: "InterfaceBold";
+}

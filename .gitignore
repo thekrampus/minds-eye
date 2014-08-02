@@ -1,0 +1,5 @@
+# Exclude editor history
+*~
+
+# Exclude database, including gnumeric prototype
+database*
