@@ -53,7 +53,7 @@ function initialize(raw_database) {
 		
 		presentOptions();
 		
-		$('#restart').on('click', function() {
+		$('#restart').on('tap', function() {
 			window.location.reload(false);
 	    });
     } else {
@@ -89,7 +89,7 @@ function presentOptions() {
 	$('tr').append("<td align=center hidden><button class='mind guess'></button><div class='guesshelp' hidden>MIND'S EYE</div></td>");
 
 	/* Guess-button functionality. */
-	$('.guess').on('click', function() {
+	$('.guess').on('tap', function() {
 		makeGuess($(this));
 	}).on('mouseenter', function() {
 		$(this).siblings('.guesshelp').finish().slideDown(100);
