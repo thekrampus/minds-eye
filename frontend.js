@@ -51,7 +51,7 @@ function initialize(raw_database) {
 		
 		presentOptions();
 		
-		$('#restart').on('click', function() {
+		$('#restart').on('tap', function() {
 			window.location.reload(false);
 	    });
     } else {
@@ -87,12 +87,12 @@ function presentOptions() {
 	$('tr').append("<td align=center hidden><button class='mind guess'></button><div class='guesshelp' hidden>MIND'S EYE</div></td>");
 
 	/* Guess-button functionality. */
-	$('.guess').on('click', function() {
+	$('.guess').on('tap', function() {
 		makeGuess($(this));
 	}).on('mouseenter', function() {
-		$(this).siblings('.guesshelp:hidden').slideDown(100);
+		$(this).siblings('.guesshelp').finish().slideDown(100);
 	}).on('mouseleave', function() {
-		$(this).siblings('.guesshelp:visible').slideUp(500);
+		$(this).siblings('.guesshelp').slideUp(500);
 	});
 
 	/* Fade the three candidates in recursively */
@@ -385,9 +385,9 @@ function buildChart(row, candidate) {
 	$('.slicelabel').hide();
 
 	$('.slice').children('path').on('mouseenter', function() {
-		$(this).siblings('.slicelabel:hidden').fadeIn(100);
+		$(this).siblings('.slicelabel').finish().fadeIn(100);
 	}).on('mouseleave', function() {
-		$(this).siblings('.slicelabel:visible').fadeOut(500);
+		$(this).siblings('.slicelabel').fadeOut(500);
 	});
 
 	cell.children('svg').css({
