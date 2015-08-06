@@ -32,6 +32,7 @@ $(document).ready(function() {
 	//     dataType: "text",
 	//     success: function(raw_database) {initialize(raw_database);}
 	// });
+    $.mobile.loading().hide();
 
 	initialize(uglyHardcodedDatabase());
 });
