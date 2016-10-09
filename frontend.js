@@ -25,7 +25,7 @@ var minds_eye_messages = ["was fabricated within my mind's eye.",
 						  "can only be found inside my mind's eye.",
 						  "was a forgery by my mind's eye."];
 
-$(document).ready(function() {
+$(window).bind('pagecreate', function() {
 	$.ajax({
 	    type: "GET",
 	    url:"database.csv",
